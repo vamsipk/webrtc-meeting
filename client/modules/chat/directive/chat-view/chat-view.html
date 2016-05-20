@@ -1,0 +1,7 @@
+<div style="height: 300px; overflow: auto;">
+    <chat-message ng-repeat="gm in groupMessages" message="gm"></chat-message>
+</div>
+<div>
+    <textarea ng-model="selfMessage"></textarea>
+    <button ng-click="sendMessage()">Send</button>
+</div>
