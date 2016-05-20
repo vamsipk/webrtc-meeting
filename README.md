@@ -1,6 +1,6 @@
 # webrtc-meeting
 
-This is a basic webrtc conference meeting application. Right now it works only in the default socket.io namespace ('/'), the feature to create and join a meeting room is not yet added.
+This is a basic webrtc conference meeting application. Right now it works only in the default socket.io namespace ('/'), the feature to create and persist a meeting room is not yet added.
 
 The server is based on koa with corresponding koa middleware and socket.io.
 
