@@ -24,7 +24,21 @@ class ConnectService{
                 queryStr +=",";
             }
         });
-        this.socket = io(url, {"query": queryStr});
+        this.socket = io(url, {"query": queryStr, secure: true});
+
+        this.socket.on("connect", () => {
+            rtcLogger.info("Socket connected: ", this.socket.id);
+        });
+        this.socket.on("connect_error", function(err){
+            rtcLogger.error("connect_error: ", err);
+        });
+        this.socket.on("reconnect", function(numAttempts){
+            rtcLogger.info("reconnected after attempts: ", numAttempts);
+        });
+        this.socket.on("connect_timeout", function(){
+            rtcLogger.info("connect_timeout");
+        });
+
         this.socket.on("connected", this.onConnect.bind(this));
         this.socket.on("joined", this.onJoin.bind(this));
         this.socket.on("addUser", this.onUserAdded.bind(this));

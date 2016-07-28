@@ -110,8 +110,6 @@ class WebRTCService{
         switch (message.type){
             case 'request_offer':
             {
-                pc.addStream(this.localStream);
-
                 const offerOptions = {offerToReceiveAudio: 0, offerToReceiveVideo: 0};
                 if(msgData.audio){
                     offerOptions.offerToReceiveAudio = 1;
@@ -119,9 +117,17 @@ class WebRTCService{
                 if(msgData.video){
                     offerOptions.offerToReceiveVideo = 1;
                 }
+                const localStream = this.localStream.clone? this.localStream.clone(): this.localStream;
+                if(!offerOptions.offerToReceiveVideo){
+                    localStream.getVideoTracks().forEach(track => {
+                        localStream.removeTrack(track)
+                    });
+                }
+
+                pc.addStream(localStream);
                 pc.createOffer(offerOptions)
                     .then(description => {
-                        rtcLogger.trace(description);
+                        rtcLogger.debug("description: ", description, offerOptions);
                         return pc.setLocalDescription(description);
                     })
                     .then(() => {
@@ -132,14 +138,26 @@ class WebRTCService{
                     .catch(err => {
                         rtcLogger.error("Error: ", err);
                         return err;
-                    })
+                    });
                 break;
             }
             case 'offer':
             {
-                pc.addStream(this.localStream);
-                pc.setRemoteDescription(new RTCSessionDescription(msgData))
+                const desc = new RTCSessionDescription(msgData);
+
+                const localStream = this.localStream.clone? this.localStream.clone(): this.localStream;
+                if(desc.sdp.indexOf("m=video") == -1){
+                    rtcLogger.debug("No video present");
+                    localStream.getVideoTracks().forEach(track => {
+                        localStream.removeTrack(track)
+                    });
+                }
+                pc.addStream(localStream);
+
+                pc.setRemoteDescription(new RTCSessionDescription(desc))
                     .then(() => {
+                        rtcLogger.debug("this.localStream: ", this.localStream);
+
                         rtcLogger.trace("After setting remote description...creating answer");
                         return pc.createAnswer();
                     })
@@ -166,19 +184,24 @@ class WebRTCService{
                     })
                     .catch(err => {
                         rtcLogger.error("Error in processing answer: ", err);
-                    })
+                    });
                 break;
             }
             case 'icecandidate':
             {
-                const candidate = new RTCIceCandidate(msgData);
-                pc.addIceCandidate(candidate)
-                    .then(() => {
-                        rtcLogger.debug("Added ice candidate successfully");
-                    })
-                    .catch(err => {
-                        rtcLogger.error("Error adding ice candidate: ", err, message.candidate);
-                    });
+                try{
+                    const candidate = new RTCIceCandidate(msgData);
+                    pc.addIceCandidate(candidate)
+                        .then(() => {
+                            rtcLogger.debug("Added ice candidate successfully: ", candidate);
+                        })
+                        .catch(err => {
+                            rtcLogger.error("Error adding ice candidate: ", err, message);
+                        });
+                }catch(ex){
+                    rtcLogger.error("IceCandidate error: ", ex, message);
+                }
+
                 break;
             }
             default:
@@ -188,18 +211,22 @@ class WebRTCService{
 
     onIceCandidate(id, candidate){
         rtcLogger.debug("onIceCandidate: ", id, candidate);
-        if(!candidate || candidate.candidate.indexOf("endOfCandidates") != -1){
-            rtcLogger.debug("End of candidates");
-            return;
+        const pc = this.peerService.get(id);
+        if(!this.endOfCandidates && !candidate){
+            this.endOfCandidates = true;
+            candidate = {
+                candidate: 'candidate:1 1 udp 1 0.0.0.0 9 typ endOfCandidates',
+                sdpMid: pc.sdpMid,
+                sdpMLineIndex: pc.sdpMLineIndex
+            };
         }
-
         const msg = Message('icecandidate', candidate, id);
         this.connectService.sendWebRTCMessage(msg);
     }
 
     onIceConnectionStateChange(id, event){
         const pc = this.peerService.get(id);
-        rtcLogger.debug("onIceConnectionStateChange: ", id, event, pc.iceConnectionState);
+        rtcLogger.info("onIceConnectionStateChange: ", id, event, pc.iceConnectionState);
     }
 
     onRemoteStreamAdded(id, stream){

@@ -2,7 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
-    cache: true,
+    cache: false,
     entry:  './index.js',
     output: {
         path:     'builds',

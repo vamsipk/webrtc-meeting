@@ -15,13 +15,13 @@ class VideoLayoutService{
     }
 
     onVideoAdded(video){
-        rtcLogger.trace("video added: ", video);
+        rtcLogger.debug("video added: ", video);
         this.localStream = this.webRTCService.getLocalStream();
         this.$rootScope.$apply();
     }
 
     onVideoRemoved(video){
-        rtcLogger.trace("video removed: ", video);
+        rtcLogger.debug("video removed: ", video);
         this.remoteStreams = this.webRTCService.getRemoteStreams();
         this.$rootScope.$apply();
     }

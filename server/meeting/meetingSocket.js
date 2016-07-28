@@ -45,6 +45,10 @@ function meetingSocket(params){
 
         });
 
+        socket.on('error',(err) => {
+            rtcLogger.error("error: ", socketID, err);
+        });
+
         socket.on('disconnect',() => {
             rtcLogger.info("Disconnected: ", socketID);
             socket.broadcast.emit( 'removeUser', socketID);

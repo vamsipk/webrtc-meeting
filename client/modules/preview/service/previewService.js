@@ -2,7 +2,6 @@
  * Created by vamsi on 5/12/16.
  */
 
-import {browserDetails} from 'webrtc-adapter'
 class PreviewService{
     constructor(webRTCService, configService, $q){
 
@@ -16,11 +15,6 @@ class PreviewService{
     }
 
     getUserMedia(audioEnabled, videoEnabled){
-        const constraints = {audio: audioEnabled, video: videoEnabled};
-        if(browserDetails.browser === 'edge'){
-            constraints.video = false;
-        }
-        this.webRTCService.config.mediaConstraints = constraints;
         return this.webRTCService.getUserMedia();
     }
 

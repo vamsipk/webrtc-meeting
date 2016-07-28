@@ -21,7 +21,7 @@ class PeerService{
             });
 
             peer.ontrack = (event => {
-                //rtcLogger.debug("ontrack: ", event);
+                rtcLogger.debug("ontrack: ", event);
                 //this.webRTCService.onRemoteStreamAdded.call(this.webRTCService, id, event.stream);
             });
 
@@ -30,6 +30,10 @@ class PeerService{
             });
 
             peer.onicecandidate = (event => {
+                if(event.candidate){
+                    peer.sdpMid = event.candidate.sdpMid;
+                    peer.sdpMLineIndex = event.candidate.sdpMLineIndex;
+                }
                 this.webRTCService.onIceCandidate.call(this.webRTCService, id, event.candidate);
             });
 
